@@ -144,7 +144,7 @@ function generateHTML(filename: string): string {
         }
         .play-btn img {
           width: 100%;
-          height: 150px;
+          height: 120px;
           object-fit: contain;
           margin-bottom: 15px;
         }
