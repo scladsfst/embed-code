@@ -87,10 +87,9 @@ export async function POST(req: Request) {
 
     const audioLink = `https://1on1-audio.vercel.app/${audioFilePath}`;
     const htmlLink = `https://1on1-audio.vercel.app/${htmlFilePath}`;
-    const htmlContents= generateHTML(filename);
+    const htmlContents = generateHTML(filename);
 
-
-    return NextResponse.json({ audioLink, htmlLink, htmlContents});
+    return NextResponse.json({ audioLink, htmlLink, htmlContents });
   } catch (error) {
     return NextResponse.json(
       { message: (error as Error).message },
@@ -176,7 +175,6 @@ function generateHTML(filename: string): string {
           }
           .play-btn img {
             width: 100%;
-            height: 100%;
             object-fit: contain;
           }
          
@@ -216,64 +214,73 @@ function generateHTML(filename: string): string {
         const audioTime = document.getElementById("audio-time");
         const audioElement = document.getElementById("audio-player");
         const plyrAudio = document.getElementById("plyr-audio");
-    
+      
         const player = new Plyr(audioElement, {
           controls: ["progress"],
           seekTime: 0,
           disableContextMenu: true,
         });
-    
+      
         const playImage = "https://1on1-audio.vercel.app/play.svg";
-        const playImageGray = "https://1on1-audio.vercel.app/gray.svg"; // Replace with the actual path of the gray image
-    
+        const playImageGray = "https://1on1-audio.vercel.app/gray.svg";
+      
         plyrAudio.style.display = "block"; // Show the Plyr controls
-    
+      
+        // Load speed from localStorage or default to 1
+        const savedSpeed = localStorage.getItem("playbackSpeed") || "1";
+        player.speed = parseFloat(savedSpeed);
+        updateSpeedButtonIcon();
+      
         playButton.addEventListener("click", () => {
           if (player.playing) {
             player.pause();
             playImg.src = playImage;
             dataLayer.push({
-              'event': 'audio_action',
-              'action': 'pause',
-              'audio_title': document.title
+              event: "audio_action",
+              action: "pause",
+              audio_title: document.title,
             });
           } else {
             player.play();
             playImg.src = playImageGray;
             dataLayer.push({
-              'event': 'audio_action',
-              'action': 'play',
-              'audio_title': document.title
+              event: "audio_action",
+              action: "play",
+              audio_title: document.title,
             });
           }
         });
-    
+      
         speedButton.addEventListener("click", () => {
           const currentPlaybackRate = player.speed;
           if (currentPlaybackRate === 1) {
             player.speed = 1.5;
-            speedButton.innerHTML = "<img src='https://1on1-audio.vercel.app/runs.svg' alt='' height='30px'>";
-            dataLayer.push({
-              'event': 'audio_action',
-              'action': 'speed_change',
-              'speed': 1.5,
-              'audio_title': document.title
-            });
+            localStorage.setItem("playbackSpeed", "1.5"); // Save to localStorage
           } else {
             player.speed = 1;
-            speedButton.innerHTML = "<img src='https://1on1-audio.vercel.app/run.svg' alt='' height='30px'>";
-            dataLayer.push({
-              'event': 'audio_action',
-              'action': 'speed_change',
-              'speed': 1,
-              'audio_title': document.title
-            });
+            localStorage.setItem("playbackSpeed", "1"); // Save to localStorage
           }
+          updateSpeedButtonIcon();
+          dataLayer.push({
+            event: "audio_action",
+            action: "speed_change",
+            speed: player.speed,
+            audio_title: document.title,
+          });
         });
-    
+      
+        function updateSpeedButtonIcon() {
+          const currentSpeed = player.speed;
+          if (currentSpeed === 1.5) {
+            speedButton.innerHTML = "<img src='https://1on1-audio.vercel.app/runs.svg' alt='' height='30px'>";
+          } else {
+            speedButton.innerHTML = "<img src='https://1on1-audio.vercel.app/run.svg' alt='' height='30px'>";
+          }
+        }
+      
         player.on("timeupdate", updateTimer);
-    
-        function updateTimer() {
+        
+         function updateTimer() {
           const currentTime = player.currentTime;
           const duration = player.duration;
           const remainingTime = duration - currentTime;
