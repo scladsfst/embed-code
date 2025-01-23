@@ -159,8 +159,8 @@ function generateHTML(filename: string): string {
           cursor: pointer;
         }
         .speed-btn img {
-          width: 32px;
-          height: 32px;
+          width: 100%;
+          height: 100%;
           border-radius: 50%;
           object-fit: contain; 
   max-width: 100%; 
