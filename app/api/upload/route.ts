@@ -150,6 +150,9 @@ function generateHTML(filename: string): string {
         .speed-btn {
           color: #fff;
           border: none;
+          width: 40px;
+          height: 40px;
+          padding: 2px;
           border-radius: 50%;
           display: flex;
           align-items: center;
@@ -196,9 +199,9 @@ function generateHTML(filename: string): string {
           <button class="play-btn" id="play-btn">
             <img id="play-img" src="https://host.the30x.com/play.svg" alt="Play Button" />
           </button>
-          <button class="speed-btn">
+          <div class="speed-btn">
             <img src="https://host.the30x.com/run.jpg" alt="" height="30px" />
-          </button>
+          </div>
           <div id="plyr-audio" class="plyr">
             <audio id="audio-player" controls>
               <source src="https://host.the30x.com/audio/${filename}" type="audio/mp3" />
