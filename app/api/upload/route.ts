@@ -158,6 +158,7 @@ function generateHTML(filename: string): string {
           align-items: center;
           justify-content: center;
           cursor: pointer;
+          background-color: #efefef;
         }
         .speed-btn img {
           width: 32px !important;
@@ -192,7 +193,7 @@ function generateHTML(filename: string): string {
             <img id="play-img" src="https://host.the30x.com/play.svg" alt="Play Button" />
           </button>
           <div class="speed-btn">
-            <img src="https://host.the30x.com/run.jpg" alt="" height="30px" />
+            <img src="https://host.the30x.com/run.svg" alt="" height="30px" />
           </div>
           <div id="plyr-audio" class="plyr">
             <audio id="audio-player" controls>
@@ -205,8 +206,8 @@ function generateHTML(filename: string): string {
       <!-- Plyr JavaScript -->
       <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
       <script>
-      document.querySelector(".audio-container").addEventListener("click", () => {
-         const playButton = document.getElementById("play-btn");
+      document.addEventListener("DOMContentLoaded", () => {
+        const playButton = document.getElementById("play-btn");
         const playImg = document.getElementById("play-img");
         const speedButton = document.querySelector(".speed-btn");
         const audioTime = document.getElementById("audio-time");
@@ -270,9 +271,9 @@ function generateHTML(filename: string): string {
         function updateSpeedButtonIcon() {
           const currentSpeed = player.speed;
           if (currentSpeed === 1.5) {
-            speedButton.innerHTML = "<img src='https://host.the30x.com/runs.jpg' alt='' height='30px'>";
+            speedButton.innerHTML = "<img src='https://host.the30x.com/runs.svg' alt='' height='30px'>";
           } else {
-            speedButton.innerHTML = "<img src='https://host.the30x.com/run.jpg' alt='' height='30px'>";
+            speedButton.innerHTML = "<img src='https://host.the30x.com/run.svg' alt='' height='30px'>";
           }
         }
       
