@@ -162,7 +162,7 @@ function generateHTML(filename: string): string {
           width: 32px !important;
           height: 32px !important;
           border-radius: 50%;
-          object-fit: contain; 
+          object-fit: cover; 
           max-width: 100%; 
           max-height: 100%;
           min-width: 100%;
