@@ -159,9 +159,9 @@ function generateHTML(filename: string): string {
           cursor: pointer;
         }
         .speed-btn img {
-          width: 32px;
-          height: 32px;
-          border-radius: 50px;
+          width: 32px !important;
+          height: 32px !important;
+          border-radius: 50%;
         }
         .audio-time {
           color: #888;
