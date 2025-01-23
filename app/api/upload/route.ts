@@ -143,7 +143,7 @@ function generateHTML(filename: string): string {
         }
         .play-btn img {
           width: 100%;
-          height: 120px;
+          height: 90px;
           object-fit: contain;
           margin-bottom: 15px;
         }
@@ -213,73 +213,64 @@ function generateHTML(filename: string): string {
         const audioTime = document.getElementById("audio-time");
         const audioElement = document.getElementById("audio-player");
         const plyrAudio = document.getElementById("plyr-audio");
-      
+    
         const player = new Plyr(audioElement, {
           controls: ["progress"],
           seekTime: 0,
           disableContextMenu: true,
         });
-      
+    
         const playImage = "https://host.the30x.com/play.svg";
-        const playImageGray = "https://host.the30x.com/gray.svg";
-      
+        const playImageGray = "https://host.the30x.com/gray.svg"; // Replace with the actual path of the gray image
+    
         plyrAudio.style.display = "block"; // Show the Plyr controls
-      
-        // Load speed from localStorage or default to 1
-        const savedSpeed = localStorage.getItem("playbackSpeed") || "1";
-        player.speed = parseFloat(savedSpeed);
-        updateSpeedButtonIcon();
-      
+    
         playButton.addEventListener("click", () => {
           if (player.playing) {
             player.pause();
             playImg.src = playImage;
             dataLayer.push({
-              event: "audio_action",
-              action: "pause",
-              audio_title: document.title,
+              'event': 'audio_action',
+              'action': 'pause',
+              'audio_title': document.title
             });
           } else {
             player.play();
             playImg.src = playImageGray;
             dataLayer.push({
-              event: "audio_action",
-              action: "play",
-              audio_title: document.title,
+              'event': 'audio_action',
+              'action': 'play',
+              'audio_title': document.title
             });
           }
         });
-      
+    
         speedButton.addEventListener("click", () => {
           const currentPlaybackRate = player.speed;
           if (currentPlaybackRate === 1) {
             player.speed = 1.5;
-            localStorage.setItem("playbackSpeed", "1.5"); // Save to localStorage
+            speedButton.innerHTML = "<img src='https://host.the30x.com/runs.svg' alt='' height='30px'>";
+            dataLayer.push({
+              'event': 'audio_action',
+              'action': 'speed_change',
+              'speed': 1.5,
+              'audio_title': document.title
+            });
           } else {
             player.speed = 1;
-            localStorage.setItem("playbackSpeed", "1"); // Save to localStorage
-          }
-          updateSpeedButtonIcon();
-          dataLayer.push({
-            event: "audio_action",
-            action: "speed_change",
-            speed: player.speed,
-            audio_title: document.title,
-          });
-        });
-      
-        function updateSpeedButtonIcon() {
-          const currentSpeed = player.speed;
-          if (currentSpeed === 1.5) {
-            speedButton.innerHTML = "<img src='https://host.the30x.com/runs.svg' alt='' height='30px'>";
-          } else {
             speedButton.innerHTML = "<img src='https://host.the30x.com/run.svg' alt='' height='30px'>";
+            dataLayer.push({
+              'event': 'audio_action',
+              'action': 'speed_change',
+              'speed': 1,
+              'audio_title': document.title
+            });
           }
-        }
-      
+        });
+    
         player.on("timeupdate", updateTimer);
-        
-         function updateTimer() {
+    
+        function updateTimer() {
           const currentTime = player.currentTime;
           const duration = player.duration;
           const remainingTime = duration - currentTime;
