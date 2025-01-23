@@ -151,8 +151,6 @@ function generateHTML(filename: string): string {
           color: #fff;
           border: none;
           border-radius: 50%;
-          width: 40px;
-          height: 40px;
           display: flex;
           align-items: center;
           justify-content: center;
