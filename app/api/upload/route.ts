@@ -159,12 +159,14 @@ function generateHTML(filename: string): string {
           cursor: pointer;
         }
         .speed-btn img {
-          width: 100%;
-          height: 100%;
+          width: 32px !important;
+          height: 32px !important;
           border-radius: 50%;
           object-fit: contain; 
-  max-width: 100%; 
-  max-height: 100%;
+          max-width: 100%; 
+          max-height: 100%;
+          min-width: 100%;
+          min-height: 100%;
         }
         .audio-time {
           color: #888;
