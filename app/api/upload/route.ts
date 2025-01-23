@@ -158,6 +158,7 @@ function generateHTML(filename: string): string {
           align-items: center;
           justify-content: center;
           cursor: pointer;
+          background-color: gray;
         }
         .speed-btn img {
           width: 32px !important;
@@ -166,8 +167,6 @@ function generateHTML(filename: string): string {
           object-fit: cover; 
           max-width: 100%; 
           max-height: 100%;
-          min-width: 100%;
-          min-height: 100%;
         }
         .audio-time {
           color: #888;
@@ -184,12 +183,6 @@ function generateHTML(filename: string): string {
             object-fit: contain;
           }
          
-        }
-        @media (max-width: 768px) {
-          .play-btn,
-          .speed-btn {
-            margin-top: 5px;
-          }
         }
       </style>
     </head>
