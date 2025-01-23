@@ -197,7 +197,7 @@ function generateHTML(filename: string): string {
             <img id="play-img" src="https://host.the30x.com/play.svg" alt="Play Button" />
           </button>
           <button class="speed-btn">
-            <img src="https://host.the30x.com/run.svg" alt="" height="30px" />
+            <img src="https://host.the30x.com/run.jpg" alt="" height="30px" />
           </button>
           <div id="plyr-audio" class="plyr">
             <audio id="audio-player" controls>
@@ -275,9 +275,9 @@ function generateHTML(filename: string): string {
         function updateSpeedButtonIcon() {
           const currentSpeed = player.speed;
           if (currentSpeed === 1.5) {
-            speedButton.innerHTML = "<img src='https://host.the30x.com/runs.svg' alt='' height='30px'>";
+            speedButton.innerHTML = "<img src='https://host.the30x.com/runs.jpg' alt='' height='30px'>";
           } else {
-            speedButton.innerHTML = "<img src='https://host.the30x.com/run.svg' alt='' height='30px'>";
+            speedButton.innerHTML = "<img src='https://host.the30x.com/run.jpg' alt='' height='30px'>";
           }
         }
       
