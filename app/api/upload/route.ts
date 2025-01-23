@@ -85,8 +85,8 @@ export async function POST(req: Request) {
       },
     });
 
-    const audioLink = `https://1on1-audio.vercel.app/${audioFilePath}`;
-    const htmlLink = `https://1on1-audio.vercel.app/${htmlFilePath}`;
+    const audioLink = `https://host.the30x.com/${audioFilePath}`;
+    const htmlLink = `https://host.the30x.com/${htmlFilePath}`;
     const htmlContents = generateHTML(filename);
 
     return NextResponse.json({ audioLink, htmlLink, htmlContents });
@@ -191,14 +191,14 @@ function generateHTML(filename: string): string {
       <div class="audio-container">
         <div class="audio-player-container">
           <button class="play-btn" id="play-btn">
-            <img id="play-img" src="https://1on1-audio.vercel.app/play.svg" alt="Play Button" />
+            <img id="play-img" src="https://host.the30x.com/play.svg" alt="Play Button" />
           </button>
           <button class="speed-btn">
-            <img src="https://1on1-audio.vercel.app/run.svg" alt="" height="30px" />
+            <img src="https://host.the30x.com/run.svg" alt="" height="30px" />
           </button>
           <div id="plyr-audio" class="plyr">
             <audio id="audio-player" controls>
-              <source src="https://1on1-audio.vercel.app/audio/${filename}" type="audio/mp3" />
+              <source src="https://host.the30x.com/audio/${filename}" type="audio/mp3" />
             </audio>
           </div>
           <div class="audio-time" id="audio-time">0:00</div>
@@ -221,8 +221,8 @@ function generateHTML(filename: string): string {
           disableContextMenu: true,
         });
       
-        const playImage = "https://1on1-audio.vercel.app/play.svg";
-        const playImageGray = "https://1on1-audio.vercel.app/gray.svg";
+        const playImage = "https://host.the30x.com/play.svg";
+        const playImageGray = "https://host.the30x.com/gray.svg";
       
         plyrAudio.style.display = "block"; // Show the Plyr controls
       
@@ -272,9 +272,9 @@ function generateHTML(filename: string): string {
         function updateSpeedButtonIcon() {
           const currentSpeed = player.speed;
           if (currentSpeed === 1.5) {
-            speedButton.innerHTML = "<img src='https://1on1-audio.vercel.app/runs.svg' alt='' height='30px'>";
+            speedButton.innerHTML = "<img src='https://host.the30x.com/runs.svg' alt='' height='30px'>";
           } else {
-            speedButton.innerHTML = "<img src='https://1on1-audio.vercel.app/run.svg' alt='' height='30px'>";
+            speedButton.innerHTML = "<img src='https://host.the30x.com/run.svg' alt='' height='30px'>";
           }
         }
       
