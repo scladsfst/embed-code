@@ -152,13 +152,12 @@ function generateHTML(filename: string): string {
           border: none;
           width: 40px;
           height: 40px;
-          padding: 2px;
+          padding: 5px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          background-color: gray;
         }
         .speed-btn img {
           width: 32px !important;
@@ -206,8 +205,8 @@ function generateHTML(filename: string): string {
       <!-- Plyr JavaScript -->
       <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
       <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        const playButton = document.getElementById("play-btn");
+      document.querySelector(".audio-container").addEventListener("click", () => {
+         const playButton = document.getElementById("play-btn");
         const playImg = document.getElementById("play-img");
         const speedButton = document.querySelector(".speed-btn");
         const audioTime = document.getElementById("audio-time");
