@@ -128,7 +128,6 @@ function generateHTML(filename: string): string {
           max-width: 100%;
           width: 90%;
           background-color: transparent;
-          padding: 1em;
           border-radius: 10px;
           flex-wrap: wrap;
           justify-content: center;
@@ -176,6 +175,10 @@ function generateHTML(filename: string): string {
           .audio-player-container {
             width: 100%;
           }
+          .speed-btn {
+            width: 2.2em;
+            height: 2.2em;
+        }
          
         }
       </style>
