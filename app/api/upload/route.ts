@@ -144,6 +144,8 @@ function generateHTML(filename: string): string {
           height: auto;
           object-fit: contain;
           margin-bottom: 1em;
+          max-width: 500px;
+
         }
         .speed-btn {
           color: #fff;
@@ -169,8 +171,6 @@ function generateHTML(filename: string): string {
           font-weight: bold;
           text-align: center;
           font-size: 1em;
-          width: 100%;
-          margin-top: 0.5em;
         }
         @media (max-width: 768px) {
           .audio-player-container {
