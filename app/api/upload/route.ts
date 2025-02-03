@@ -176,8 +176,8 @@ function generateHTML(filename: string): string {
             width: 100%;
           }
           .speed-btn {
-            width: 2.2em;
-            height: 2.2em;
+            width: 2.5em;
+            height: 2.5em;
         }
          
         }
