@@ -174,12 +174,7 @@ function generateHTML(filename: string): string {
         @media (max-width: 768px) {
           .audio-player-container {
             width: 100%;
-          }
-          .speed-btn {
-            width: 2.5em;
-            height: 2.5em;
-        }
-         
+          }         
         }
       </style>
     </head>
