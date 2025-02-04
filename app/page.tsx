@@ -11,6 +11,7 @@ export default function Home() {
   const [audioFiles, setAudioFiles] = useState<
     { name: string; download_url: string }[]
   >([]);
+  const [enableTracking, setEnableTracking] = useState(false); // New state for tracking checkbox
 
   const fetchAudioFiles = async () => {
     const response = await fetch("/api/audio-files");
@@ -47,6 +48,7 @@ export default function Home() {
         body: JSON.stringify({
           filename: file.name,
           content: content,
+          enableTracking: enableTracking, // Pass the checkbox state to the API
         }),
       });
 
@@ -64,26 +66,6 @@ export default function Home() {
     };
 
     reader.readAsDataURL(file);
-  };
-
-  const handleDelete = async (filename: string) => {
-    const response = await fetch("/api/delete", {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ filename }),
-    });
-
-    const result = await response.json();
-    if (response.ok) {
-      alert("File deleted successfully");
-      setAudioFiles((prevFiles) =>
-        prevFiles.filter((file) => file.name !== filename)
-      );
-    } else {
-      alert("File deletion failed: " + result.message);
-    }
   };
 
   const handleEmbed = (content: string) => {
@@ -112,6 +94,21 @@ export default function Home() {
             className="block w-full text-base text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
             required
           />
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="enableTracking"
+              checked={enableTracking}
+              onChange={(e) => setEnableTracking(e.target.checked)}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+            />
+            <label
+              htmlFor="enableTracking"
+              className="ml-2 text-sm font-medium text-gray-700 cursor-pointer select-none"
+            >
+              Enable Analytics & Performance Tracking
+            </label>
+          </div>{" "}
           <button
             type="submit"
             className="w-full bg-gradient-to-r from-blue-500 to-red-500 text-white font-semibold py-2 rounded-lg hover:bg-gradient-to-l transition-colors text-lg"
@@ -141,43 +138,7 @@ export default function Home() {
             </button>
           </div>
         )}
-        {/* <div className="mt-10 w-full">
-          <h2 className="text-2xl font-bold text-center mb-4 text-gray-800">
-            Available embeded codes
-          </h2>
-          {audioFiles.length > 0 ? (
-            <ul className="w-full ">
-              {audioFiles.map((file, index) => (
-                <li key={file.name} className="mb-4 flex gap-2 md:gap-8 items-center">
-                  <a
-                    href={file.download_url}
-                    className="text-blue-500 flex "
-                  >
-                    <span className="text-black">{index + 1}. </span>
-
-                    {file.name}
-                  </a>
-                  <button
-                    onClick={() => handleEmbed(`https://1on1-audio.vercel.app/embeded/${file.name}`)}
-                    className="bg-blue-500 text-white font-semibold p-2 rounded-lg mt-2 hover:bg-blue-600 transition-colors text-xs md:text-base"
-                  >
-                    Get Embeded Code
-                  </button>
-                  <button
-                    onClick={() => handleDelete(file.name)}
-                    className="text-red-500 underline"
-                  >
-                    Delete
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>No embeded codes available.</p>
-          )}
-        </div> */}
       </div>
     </div>
   );
 }
-

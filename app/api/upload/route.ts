@@ -2,7 +2,7 @@ import { Octokit } from "@octokit/rest";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  const { filename, content } = await req.json();
+  const { filename, content,enableTracking } = await req.json();
 
   const octokit = new Octokit({
     auth: process.env.GITHUB_TOKEN,
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
       },
     });
 
-    const htmlContent = generateHTML(filename);
+    const htmlContent = generateHTML(filename,enableTracking);
 
     const htmlFilename = `${filename.split(".").slice(0, -1).join(".")}.html`;
     const htmlFilePath = `embeded/${htmlFilename}`;
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
 
     const audioLink = `https://host.the30x.com/${audioFilePath}`;
     const htmlLink = `https://host.the30x.com/${htmlFilePath}`;
-    const htmlContents = generateHTML(filename);
+    const htmlContents = generateHTML(filename, enableTracking);
 
     return NextResponse.json({ audioLink, htmlLink, htmlContents });
   } catch (error) {
@@ -98,8 +98,9 @@ export async function POST(req: Request) {
   }
 }
 
-function generateHTML(filename: string): string {
-  return `
+function generateHTML(filename: string, enableTracking: boolean): string {
+  if (enableTracking) {
+    return `
   <!DOCTYPE html>
   <html lang="en">
     <head>
@@ -360,4 +361,197 @@ function generateHTML(filename: string): string {
     </body>
   </html>
   `;
+  } else {
+    return `
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Custom Audio Player</title>
+        <!-- Plyr CSS -->
+        <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+        <style>
+          .audio-container {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            min-height: max-content;
+          }
+          #plyr-audio {
+            pointer-events: none;
+          }
+          .plyr--audio .plyr__controls {
+            background: transparent !important;
+          }
+          .audio-player-container {
+            display: flex;
+            align-items: center;
+            max-width: 100%;
+            width: 90%;
+            background-color: transparent;
+            border-radius: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+          }
+          .play-btn {
+            cursor: pointer;
+            width: 100%;
+            background: none;
+            border: none;
+          }
+          .play-btn img {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            margin-bottom: 1em;
+            max-width: 500px;
+  
+          }
+          .speed-btn {
+            color: #fff;
+            border: none;
+            width: 3em;
+            height: 3em;
+            padding: 0.5em;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background-color: #efefef;
+          }
+          .speed-btn img {
+            width: 100%;
+            height: auto;
+            border-radius: 50%;
+            object-fit: cover;
+          }
+          .audio-time {
+            color: #888;
+            font-weight: bold;
+            text-align: center;
+            font-size: 1em;
+          }
+          @media (max-width: 768px) {
+            .audio-player-container {
+              width: 100%;
+            }   
+            .speed-btn {
+              width: 2.5em;
+              height: 2.5em;
+              padding: 0.325em;
+          }      
+          }
+        </style>
+      </head>
+      <body>
+        <div class="audio-container">
+          <div class="audio-player-container">
+            <button class="play-btn" id="play-btn">
+              <img id="play-img" src="https://host.the30x.com/play.svg" alt="Play Button" />
+            </button>
+            <div class="speed-btn">
+              <img id="speed-img" src="https://host.the30x.com/runs.svg" alt="Speed Icon" />
+            </div>
+            <div id="plyr-audio" class="plyr">
+              <audio id="audio-player" controls>
+                <source src="https://host.the30x.com/audio/${filename}" type="audio/mp3" />
+              </audio>
+            </div>
+            <div class="audio-time" id="audio-time">0:00</div>
+          </div>
+        </div>
+        <!-- Plyr JavaScript -->
+        <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+        <script>
+          document.addEventListener("DOMContentLoaded", () => {
+            const playButton = document.getElementById("play-btn");
+            const playImg = document.getElementById("play-img");
+            const speedButton = document.querySelector(".speed-btn");
+            const speedImg = document.getElementById("speed-img");
+            const audioTime = document.getElementById("audio-time");
+            const audioElement = document.getElementById("audio-player");
+            const plyrAudio = document.getElementById("plyr-audio");
+  
+            const player = new Plyr(audioElement, {
+              controls: ["progress"],
+              seekTime: 0,
+              disableContextMenu: true,
+            });
+  
+            // Set initial speed to 1.5x
+            player.speed = 1.5;
+            speedImg.src = "https://host.the30x.com/runs.svg";
+  
+            const playImage = "https://host.the30x.com/play.svg";
+            const playImageGray = "https://host.the30x.com/gray.svg"; // Replace with the actual path of the gray image
+  
+            plyrAudio.style.display = "block"; // Show the Plyr controls
+  
+            playButton.addEventListener("click", () => {
+              if (player.playing) {
+                player.pause();
+                playImg.src = playImage;
+                dataLayer.push({
+                  'event': 'audio_action',
+                  'action': 'pause',
+                  'audio_title': document.title
+                });
+              } else {
+                player.play();
+                playImg.src = playImageGray;
+                dataLayer.push({
+                  'event': 'audio_action',
+                  'action': 'play',
+                  'audio_title': document.title
+                });
+              }
+            });
+  
+            speedButton.addEventListener("click", () => {
+              const currentPlaybackRate = player.speed;
+              if (currentPlaybackRate === 1) {
+                player.speed = 1.5;
+                speedImg.src = "https://host.the30x.com/runs.svg";
+                dataLayer.push({
+                  'event': 'audio_action',
+                  'action': 'speed_change',
+                  'speed': 1.5,
+                  'audio_title': document.title
+                });
+              } else {
+                player.speed = 1;
+                speedImg.src = "https://host.the30x.com/run.svg";
+                dataLayer.push({
+                  'event': 'audio_action',
+                  'action': 'speed_change',
+                  'speed': 1,
+                  'audio_title': document.title
+                });
+              }
+            });
+  
+            player.on("timeupdate", updateTimer);
+  
+            function updateTimer() {
+              const currentTime = player.currentTime;
+              const duration = player.duration;
+              const remainingTime = duration - currentTime;
+              audioTime.textContent = \`\${formatTime(remainingTime)}\`;
+            }
+  
+            function formatTime(seconds) {
+              const minutes = Math.floor(seconds / 60);
+              const secs = Math.floor(seconds % 60);
+              return \`\${minutes}:\${secs < 10 ? "0" : ""}\${secs}\`;
+            }
+          });
+          </script>
+      </body>
+    </html>
+  
+  `;
+  }
 }
