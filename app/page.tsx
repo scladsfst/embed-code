@@ -95,6 +95,7 @@ export default function Home() {
             required
           />
           <div className="flex items-center">
+            
             <input
               type="checkbox"
               id="enableTracking"
