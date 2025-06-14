@@ -2,46 +2,13 @@ import { Octokit } from "@octokit/rest";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
+  const { filename, content, enableTracking } = await req.json();
+
+  const octokit = new Octokit({
+    auth: process.env.GITHUB_TOKEN,
+  });
+
   try {
-    // Validate request
-    if (!req) {
-      return NextResponse.json({ message: "Invalid request" }, { status: 400 });
-    }
-
-    // Parse request body
-    let body;
-    try {
-      body = await req.json();
-    } catch (error) {
-      return NextResponse.json(
-        { message: "Invalid JSON in request body" },
-        { status: 400 }
-      );
-    }
-
-    // Validate required fields
-    const { filename, content, enableTracking } = body;
-    if (!filename || !content) {
-      return NextResponse.json(
-        {
-          message: "Missing required fields: filename and content are required",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Initialize Octokit
-    const octokit = new Octokit({
-      auth: process.env.GITHUB_TOKEN,
-    });
-
-    if (!process.env.GITHUB_TOKEN) {
-      return NextResponse.json(
-        { message: "GitHub token not configured" },
-        { status: 500 }
-      );
-    }
-
     const audioFilePath = `audio/${filename}`;
 
     // Get the current SHA of the file if it exists
@@ -57,45 +24,33 @@ export async function POST(req: Request) {
       }
     } catch (error: any) {
       if (error.status !== 404) {
-        console.error("Error getting file content:", error);
-        return NextResponse.json(
-          { message: "Error checking existing file" },
-          { status: 500 }
-        );
+        throw error;
       }
     }
 
     // Upload or update the audio file
-    try {
-      await octokit.repos.createOrUpdateFileContents({
-        owner: "mr-rony356",
-        repo: "Eric-Audio-button",
-        path: audioFilePath,
-        message: `Upload ${filename}`,
-        content: Buffer.from(content, "base64").toString("base64"),
-        sha,
-        committer: {
-          name: "mr-rony356",
-          email: "committer@example.com",
-        },
-        author: {
-          name: "mr-rony356",
-          email: "author@example.com",
-        },
-      });
-    } catch (error: any) {
-      console.error("Error uploading file:", error);
-      return NextResponse.json(
-        { message: "Error uploading file to GitHub" },
-        { status: 500 }
-      );
-    }
+    await octokit.repos.createOrUpdateFileContents({
+      owner: "mr-rony356",
+      repo: "Eric-Audio-button",
+      path: audioFilePath,
+      message: `Upload ${filename}`,
+      content: Buffer.from(content, "base64").toString("base64"),
+      sha, // Include the SHA if the file already exists
+      committer: {
+        name: "mr-rony356",
+        email: "committer@example.com",
+      },
+      author: {
+        name: "mr-rony356",
+        email: "author@example.com",
+      },
+    });
 
     const htmlContent = generateHTML(filename, enableTracking);
+
     const htmlFilename = `${filename.split(".").slice(0, -1).join(".")}.html`;
     const htmlFilePath = `embeded/${htmlFilename}`;
 
-    // Get the current SHA of the HTML file if it exists
     let htmlSha;
     try {
       const { data } = await octokit.repos.getContent({
@@ -108,401 +63,381 @@ export async function POST(req: Request) {
       }
     } catch (error: any) {
       if (error.status !== 404) {
-        console.error("Error getting HTML file content:", error);
-        return NextResponse.json(
-          { message: "Error checking existing HTML file" },
-          { status: 500 }
-        );
+        throw error;
       }
     }
 
     // Create or update the HTML file
-    try {
-      await octokit.repos.createOrUpdateFileContents({
-        owner: "mr-rony356",
-        repo: "Eric-Audio-button",
-        path: htmlFilePath,
-        message: `Create HTML for ${filename}`,
-        content: Buffer.from(htmlContent).toString("base64"),
-        sha: htmlSha,
-        committer: {
-          name: "mr-rony356",
-          email: "committer@example.com",
-        },
-        author: {
-          name: "mr-rony356",
-          email: "author@example.com",
-        },
-      });
-    } catch (error: any) {
-      console.error("Error uploading HTML file:", error);
-      return NextResponse.json(
-        { message: "Error uploading HTML file to GitHub" },
-        { status: 500 }
-      );
-    }
+    await octokit.repos.createOrUpdateFileContents({
+      owner: "mr-rony356",
+      repo: "Eric-Audio-button",
+      path: htmlFilePath,
+      message: `Create HTML for ${filename}`,
+      content: Buffer.from(htmlContent).toString("base64"),
+      sha: htmlSha,
+      committer: {
+        name: "mr-rony356",
+        email: "committer@example.com",
+      },
+      author: {
+        name: "mr-rony356",
+        email: "author@example.com",
+      },
+    });
 
     const audioLink = `https://host.the30x.com/${audioFilePath}`;
     const htmlLink = `https://host.the30x.com/${htmlFilePath}`;
+    const htmlContents = generateHTML(filename, enableTracking);
 
-    return NextResponse.json({
-      audioLink,
-      htmlLink,
-      htmlContents: htmlContent,
-      success: true,
-    });
-  } catch (error: any) {
-    console.error("Unexpected error:", error);
+    return NextResponse.json({ audioLink, htmlLink, htmlContents });
+  } catch (error) {
     return NextResponse.json(
-      {
-        message: "An unexpected error occurred",
-        error: error.message,
-      },
+      { message: (error as Error).message },
       { status: 500 }
     );
   }
 }
 
 function generateHTML(filename: string, enableTracking: boolean): string {
-  const baseUrl = "https://host.the30x.com";
-  const audioUrl = `${baseUrl}/audio/${filename}`;
+  const baseStyles = `
+    .audio-container{font-family:Arial,sans-serif;display:flex;justify-content:center;width:100%;min-height:max-content}
+    #plyr-audio{pointer-events:none}
+    .plyr--audio .plyr__controls{background:transparent!important}
+    .audio-player-container{display:flex;align-items:center;max-width:100%;width:90%;background-color:transparent;border-radius:10px;flex-wrap:wrap;justify-content:center;opacity:0;transition:opacity 0.3s ease}
+    .audio-player-container.loaded{opacity:1}
+    .play-btn{cursor:pointer;width:100%;background:none;border:none}
+    .play-btn img{width:100%;height:auto;object-fit:contain;margin-bottom:1em;max-width:500px}
+    .speed-btn{color:#fff;border:none;width:3em;height:3em;padding:0.5em;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background-color:#efefef}
+    .speed-btn img{width:100%;height:auto;border-radius:50%;object-fit:cover}
+    .audio-time{color:#888;font-weight:bold;text-align:center;font-size:1em}
+    .audio-loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#666;font-size:14px;display:none}
+    .audio-error{color:#e74c3c;text-align:center;padding:1em;font-size:14px;display:none}
+    @media (max-width:768px){.audio-player-container{width:100%}.speed-btn{width:2.5em;height:2.5em;padding:0.325em}}
+  `;
 
-  const htmlContent = `
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Embedded audio player" />
-    <title>Audio Player</title>
-    
-    <!-- Preload critical assets -->
-    <link rel="preload" href="https://cdn.plyr.io/3.7.8/plyr.css" as="style" />
-    <link rel="preload" href="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js" as="script" />
-    <link rel="preload" href="${baseUrl}/play.svg" as="image" />
-    <link rel="preload" href="${baseUrl}/runs.svg" as="image" />
-    <link rel="preload" href="${audioUrl}" as="audio" />
-    
-    <!-- Plyr CSS -->
-    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
-    
-    <style>
-      :root {
-        --player-width: min(90%, 500px);
-        --button-size: 3em;
-        --mobile-button-size: 2.5em;
-      }
-
-      .audio-container {
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        display: flex;
-        justify-content: center;
-        width: 100%;
-        min-height: max-content;
-        margin: 1rem 0;
-      }
-
-      .audio-player-container {
-        display: flex;
-        align-items: center;
-        width: var(--player-width);
-        background-color: transparent;
-        border-radius: 10px;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 1rem;
-      }
-
-      .play-btn {
-        cursor: pointer;
-        width: 100%;
-        background: none;
-        border: none;
-        padding: 0;
-        transition: transform 0.2s ease;
-      }
-
-      .play-btn:hover {
-        transform: scale(1.02);
-      }
-
-      .play-btn:focus-visible {
-        outline: 2px solid #007bff;
-        outline-offset: 2px;
-      }
-
-      .play-btn img {
-        width: 100%;
-        height: auto;
-        object-fit: contain;
-        margin-bottom: 1em;
-        max-width: 500px;
-      }
-
-      .speed-btn {
-        color: #fff;
-        border: none;
-        width: var(--button-size);
-        height: var(--button-size);
-        padding: 0.5em;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        background-color: #efefef;
-        transition: background-color 0.2s ease;
-      }
-
-      .speed-btn:hover {
-        background-color: #e0e0e0;
-      }
-
-      .speed-btn:focus-visible {
-        outline: 2px solid #007bff;
-        outline-offset: 2px;
-      }
-
-      .speed-btn img {
-        width: 100%;
-        height: auto;
-        border-radius: 50%;
-        object-fit: cover;
-      }
-
-      .audio-time {
-        color: #666;
-        font-weight: 600;
-        text-align: center;
-        font-size: 1em;
-        min-width: 4em;
-      }
-
-      .plyr--audio .plyr__controls {
-        background: transparent !important;
-      }
-
-      #plyr-audio {
-        pointer-events: none;
-        width: 100%;
-      }
-
-      .loading {
-        opacity: 0.5;
-        pointer-events: none;
-      }
-
-      @media (max-width: 768px) {
-        .audio-player-container {
-          width: 100%;
-        }
-        .speed-btn {
-          width: var(--mobile-button-size);
-          height: var(--mobile-button-size);
-          padding: 0.325em;
-        }
-      }
-
-      /* Loading animation */
-      @keyframes pulse {
-        0% { opacity: 0.6; }
-        50% { opacity: 1; }
-        100% { opacity: 0.6; }
-      }
-
-      .loading-animation {
-        animation: pulse 1.5s infinite;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="audio-container">
-      <div class="audio-player-container">
-        <button class="play-btn" id="play-btn" aria-label="Play audio">
-          <img id="play-img" src="${baseUrl}/play.svg" alt="Play Button" />
-        </button>
-        <button class="speed-btn" id="speed-btn" aria-label="Change playback speed">
-          <img id="speed-img" src="${baseUrl}/runs.svg" alt="Speed Icon" />
-        </button>
-        <div id="plyr-audio" class="plyr">
-          <audio id="audio-player" controls preload="metadata">
-            <source src="${audioUrl}" type="audio/mp3" />
-            Your browser does not support the audio element.
-          </audio>
-        </div>
-        <div class="audio-time" id="audio-time" aria-live="polite">0:00</div>
-      </div>
-    </div>
-
-    <!-- Plyr JavaScript -->
-    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js" defer></script>
-    <script>
-      (function() {
-        // Error handling utility
-        function handleError(error, context) {
-          console.error(\`Error in \${context}:\`, error);
-          // You could add error reporting here
-        }
-
-        // Initialize player when DOM is ready
-        document.addEventListener("DOMContentLoaded", () => {
-          try {
-            const elements = {
-              playButton: document.getElementById("play-btn"),
-              playImg: document.getElementById("play-img"),
-              speedButton: document.getElementById("speed-btn"),
-              speedImg: document.getElementById("speed-img"),
-              audioTime: document.getElementById("audio-time"),
-              audioElement: document.getElementById("audio-player"),
-              plyrAudio: document.getElementById("plyr-audio")
-            };
-
-            // Validate all elements exist
-            Object.entries(elements).forEach(([key, element]) => {
-              if (!element) {
-                throw new Error(\`Required element \${key} not found\`);
-              }
-            });
-
-            // Initialize Plyr with error handling
-            let player;
-            try {
-              player = new Plyr(elements.audioElement, {
-                controls: ["progress"],
-                seekTime: 0,
-                disableContextMenu: true,
-                loadSprite: false,
-                iconUrl: null,
-                blankVideo: null
-              });
-            } catch (error) {
-              handleError(error, "Plyr initialization");
-              return;
-            }
-
-            // Constants
-            const PLAYBACK_SPEEDS = {
-              normal: 1,
-              fast: 1.5
-            };
-
-            const IMAGES = {
-              play: "${baseUrl}/play.svg",
-              playGray: "${baseUrl}/gray.svg",
-              speedNormal: "${baseUrl}/run.svg",
-              speedFast: "${baseUrl}/runs.svg"
-            };
-
-            // Set initial state
-            player.speed = PLAYBACK_SPEEDS.fast;
-            elements.speedImg.src = IMAGES.speedFast;
-            elements.plyrAudio.style.display = "block";
-
-            // Play/Pause handler
-            elements.playButton.addEventListener("click", () => {
-              try {
-                if (player.playing) {
-                  player.pause();
-                  elements.playImg.src = IMAGES.play;
-                  ${enableTracking ? `trackEvent('pause');` : ""}
-                } else {
-                  player.play();
-                  elements.playImg.src = IMAGES.playGray;
-                  ${enableTracking ? `trackEvent('play');` : ""}
-                }
-              } catch (error) {
-                handleError(error, "play/pause handler");
-              }
-            });
-
-            // Speed control handler
-            elements.speedButton.addEventListener("click", () => {
-              try {
-                const newSpeed = player.speed === PLAYBACK_SPEEDS.normal 
-                  ? PLAYBACK_SPEEDS.fast 
-                  : PLAYBACK_SPEEDS.normal;
-                
-                player.speed = newSpeed;
-                elements.speedImg.src = newSpeed === PLAYBACK_SPEEDS.fast 
-                  ? IMAGES.speedFast 
-                  : IMAGES.speedNormal;
-                
-                ${
-                  enableTracking
-                    ? `trackEvent('speed_change', { speed: newSpeed });`
-                    : ""
-                }
-              } catch (error) {
-                handleError(error, "speed control handler");
-              }
-            });
-
-            // Time update handler
-            player.on("timeupdate", () => {
-              try {
-                updateTimer();
-              } catch (error) {
-                handleError(error, "time update handler");
-              }
-            });
-
-            // Error handling for audio element
-            elements.audioElement.addEventListener("error", (e) => {
-              handleError(e, "audio element");
-              elements.audioTime.textContent = "Error loading audio";
-            });
-
-            // Loading state handling
-            elements.audioElement.addEventListener("loadstart", () => {
-              elements.playButton.classList.add("loading");
-            });
-
-            elements.audioElement.addEventListener("canplay", () => {
-              elements.playButton.classList.remove("loading");
-            });
-
-            function updateTimer() {
-              const currentTime = player.currentTime;
-              const duration = player.duration;
-              const remainingTime = duration - currentTime;
-              elements.audioTime.textContent = formatTime(remainingTime);
-            }
-
-            function formatTime(seconds) {
-              if (isNaN(seconds)) return "0:00";
-              const minutes = Math.floor(seconds / 60);
-              const secs = Math.floor(seconds % 60);
-              return \`\${minutes}:\${secs < 10 ? "0" : ""}\${secs}\`;
-            }
-
-            ${
-              enableTracking
-                ? `
-            function trackEvent(action, data = {}) {
-              try {
-                window.dataLayer = window.dataLayer || [];
-                window.dataLayer.push({
-                  'event': 'audio_action',
-                  'action': action,
-                  'audio_title': document.title,
-                  ...data
+  const optimizedScript = `
+    (function(){
+      'use strict';
+      let player,isLoaded=false,retryCount=0;
+      const maxRetries=3;
+      
+      function initializePlayer(){
+        const elements={
+          playButton:document.getElementById('play-btn'),
+          playImg:document.getElementById('play-img'),
+          speedButton:document.querySelector('.speed-btn'),
+          speedImg:document.getElementById('speed-img'),
+          audioTime:document.getElementById('audio-time'),
+          audioElement:document.getElementById('audio-player'),
+          plyrAudio:document.getElementById('plyr-audio'),
+          container:document.querySelector('.audio-player-container'),
+          loading:document.querySelector('.audio-loading'),
+          error:document.querySelector('.audio-error')
+        };
+        
+        if(!elements.audioElement||!elements.playButton) return false;
+        
+        try{
+          player=new Plyr(elements.audioElement,{
+            controls:['progress'],
+            seekTime:0,
+            disableContextMenu:true,
+            loadSprite:false,
+            iconUrl:'',
+            blankVideo:'data:video/mp4;base64,AAAAIGZ0eXBtcDQyAAAAAG1wNDJpc29t'
+          });
+          
+          player.speed=1.5;
+          elements.speedImg.src='https://host.the30x.com/runs.svg';
+          
+          const playImage='https://host.the30x.com/play.svg';
+          const playImageGray='https://host.the30x.com/gray.svg';
+          
+          elements.plyrAudio.style.display='block';
+          
+          elements.playButton.addEventListener('click',function(){
+            if(player.playing){
+              player.pause();
+              elements.playImg.src=playImage;
+              ${
+                enableTracking
+                  ? `
+              if(typeof dataLayer!=='undefined'){
+                dataLayer.push({
+                  'event':'audio_action',
+                  'action':'pause',
+                  'audio_title':document.title||'${filename}'
                 });
-              } catch (error) {
-                handleError(error, "tracking");
+              }`
+                  : ""
+              }
+            }else{
+              player.play();
+              elements.playImg.src=playImageGray;
+              ${
+                enableTracking
+                  ? `
+              if(typeof dataLayer!=='undefined'){
+                dataLayer.push({
+                  'event':'audio_action',
+                  'action':'play',
+                  'audio_title':document.title||'${filename}'
+                });
+              }`
+                  : ""
               }
             }
-            `
-                : ""
+          });
+          
+          elements.speedButton.addEventListener('click',function(){
+            const currentSpeed=player.speed;
+            if(currentSpeed===1){
+              player.speed=1.5;
+              elements.speedImg.src='https://host.the30x.com/runs.svg';
+              ${
+                enableTracking
+                  ? `
+              if(typeof dataLayer!=='undefined'){
+                dataLayer.push({
+                  'event':'audio_action',
+                  'action':'speed_change',
+                  'speed':1.5,
+                  'audio_title':document.title||'${filename}'
+                });
+              }`
+                  : ""
+              }
+            }else{
+              player.speed=1;
+              elements.speedImg.src='https://host.the30x.com/run.svg';
+              ${
+                enableTracking
+                  ? `
+              if(typeof dataLayer!=='undefined'){
+                dataLayer.push({
+                  'event':'audio_action',
+                  'action':'speed_change',
+                  'speed':1,
+                  'audio_title':document.title||'${filename}'
+                });
+              }`
+                  : ""
+              }
             }
-
-          } catch (error) {
-            handleError(error, "main initialization");
-          }
+          });
+          
+          player.on('timeupdate',function(){
+            const current=player.currentTime;
+            const duration=player.duration;
+            if(duration&&!isNaN(duration)){
+              const remaining=duration-current;
+              elements.audioTime.textContent=formatTime(remaining);
+            }
+          });
+          
+          player.on('ready',function(){
+            elements.container.classList.add('loaded');
+            elements.loading.style.display='none';
+            isLoaded=true;
+          });
+          
+          player.on('error',function(){
+            showError('Failed to load audio');
+          });
+          
+          return true;
+        }catch(e){
+          console.warn('Player initialization failed:',e);
+          return false;
+        }
+      }
+      
+      function formatTime(seconds){
+        if(!seconds||isNaN(seconds))return '0:00';
+        const minutes=Math.floor(seconds/60);
+        const secs=Math.floor(seconds%60);
+        return minutes+':'+(secs<10?'0':'')+secs;
+      }
+      
+      function showError(message){
+        const loading=document.querySelector('.audio-loading');
+        const error=document.querySelector('.audio-error');
+        if(loading)loading.style.display='none';
+        if(error){
+          error.textContent=message;
+          error.style.display='block';
+        }
+      }
+      
+      function loadPlyr(){
+        if(typeof Plyr!=='undefined'){
+          initializePlayer();
+          return;
+        }
+        
+        if(retryCount>=maxRetries){
+          showError('Failed to load player after multiple attempts');
+          return;
+        }
+        
+        retryCount++;
+        const script=document.createElement('script');
+        script.src='https://cdn.plyr.io/3.7.8/plyr.polyfilled.js';
+        script.onload=function(){
+          setTimeout(initializePlayer,100);
+        };
+        script.onerror=function(){
+          setTimeout(loadPlyr,1000*retryCount);
+        };
+        document.head.appendChild(script);
+      }
+      
+      function preloadImages(){
+        const images=['https://host.the30x.com/play.svg','https://host.the30x.com/gray.svg','https://host.the30x.com/runs.svg','https://host.the30x.com/run.svg'];
+        images.forEach(function(src){
+          const img=new Image();
+          img.src=src;
         });
-      })();
-    </script>
-  </body>
+      }
+      
+      if(document.readyState==='loading'){
+        document.addEventListener('DOMContentLoaded',function(){
+          preloadImages();
+          loadPlyr();
+        });
+      }else{
+        preloadImages();
+        loadPlyr();
+      }
+      
+      ${
+        enableTracking
+          ? `
+      // Enhanced tracking with error handling
+      (function(){
+        if(typeof dataLayer==='undefined'){
+          window.dataLayer=[];
+        }
+        
+        var divisor=10;
+        var audios_status={};
+        
+        function eventHandler(e){
+          try{
+            var audioId=e.target.id||(e.target.id='html5_audio_'+Math.random().toString(36).slice(2));
+            var audioTitle=decodeURIComponent((e.target.currentSrc||'').split('/').pop()||'${filename}');
+            
+            switch(e.type){
+              case 'timeupdate':
+                if(!audios_status[audioId])return;
+                audios_status[audioId].current=Math.round(e.target.currentTime);
+                var pct=Math.floor(100*audios_status[audioId].current/e.target.duration);
+                for(var j in audios_status[audioId]._progress_markers){
+                  if(pct>=j&&j>audios_status[audioId].greatest_marker){
+                    audios_status[audioId].greatest_marker=j;
+                  }
+                }
+                if(audios_status[audioId].greatest_marker&&!audios_status[audioId]._progress_markers[audios_status[audioId].greatest_marker]){
+                  audios_status[audioId]._progress_markers[audios_status[audioId].greatest_marker]=true;
+                  dataLayer.push({
+                    'event':'audio',
+                    'audioPlayerAction':'Progress %'+audios_status[audioId].greatest_marker,
+                    'audioTitle':audioTitle
+                  });
+                }
+                break;
+              case 'play':
+                dataLayer.push({
+                  'event':'audio',
+                  'audioPlayerAction':'play',
+                  'audioTitle':audioTitle
+                });
+                break;
+              case 'pause':
+                dataLayer.push({
+                  'event':'audio',
+                  'audioPlayerAction':'pause',
+                  'audioTitle':audioTitle,
+                  'audioValue':audios_status[audioId]?audios_status[audioId].current:0
+                });
+                break;
+              case 'ended':
+                dataLayer.push({
+                  'event':'audio',
+                  'audioPlayerAction':'finished',
+                  'audioTitle':audioTitle
+                });
+                break;
+            }
+          }catch(err){
+            console.warn('Tracking error:',err);
+          }
+        }
+        
+        setTimeout(function(){
+          var audios=document.getElementsByTagName('audio');
+          for(var i=0;i<audios.length;i++){
+            var audioId=audios[i].getAttribute('id')||('html5_audio_'+Math.random().toString(36).slice(2));
+            if(!audios[i].getAttribute('id')){
+              audios[i].setAttribute('id',audioId);
+            }
+            
+            audios_status[audioId]={
+              greatest_marker:0,
+              _progress_markers:{},
+              current:0
+            };
+            
+            for(var j=0;j<divisor;j++){
+              audios_status[audioId]._progress_markers[(j+1)*(100/divisor)]=false;
+            }
+            
+            ['timeupdate','play','pause','ended'].forEach(function(event){
+              audios[i].addEventListener(event,eventHandler);
+            });
+          }
+        },500);
+      })();`
+          : ""
+      }
+    })();
+  `;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Custom Audio Player</title>
+<link rel="preconnect" href="https://cdn.plyr.io">
+<link rel="preconnect" href="https://host.the30x.com">
+<link rel="dns-prefetch" href="//cdn.plyr.io">
+<link rel="dns-prefetch" href="//host.the30x.com">
+<link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
+<style>${baseStyles}</style>
+</head>
+<body>
+<div class="audio-container">
+<div class="audio-player-container">
+<div class="audio-loading">Loading...</div>
+<div class="audio-error"></div>
+<button class="play-btn" id="play-btn">
+<img id="play-img" src="https://host.the30x.com/play.svg" alt="Play Button">
+</button>
+<div class="speed-btn">
+<img id="speed-img" src="https://host.the30x.com/runs.svg" alt="Speed Icon">
+</div>
+<div id="plyr-audio" class="plyr">
+<audio id="audio-player" controls preload="metadata">
+<source src="https://host.the30x.com/audio/${filename}" type="audio/mp3">
+</audio>
+</div>
+<div class="audio-time" id="audio-time">0:00</div>
+</div>
+</div>
+<script>${optimizedScript}</script>
+</body>
 </html>`;
 
-  return htmlContent;
+  return html.replace(/\s+/g, " ").trim();
 }
