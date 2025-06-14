@@ -107,8 +107,8 @@ function generateHTML(filename: string, enableTracking: boolean): string {
     .audio-player-container.loaded{opacity:1}
     .play-btn{cursor:pointer;width:100%;background:none;border:none}
     .play-btn img{width:100%;height:auto;object-fit:contain;margin-bottom:1em;max-width:500px}
-    .speed-btn{color:#fff;border:none;width:3em;height:3em;padding:0.5em;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background-color:#efefef}
-    .speed-btn img{width:100%;height:auto;border-radius:50%;object-fit:cover}
+    .speed-btn{color:#fff;border:none;width:3em;height:3em;padding:0.5em;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background-color:#efefef;box-sizing:border-box}
+    .speed-btn img{width:100%;height:auto;border-radius:50%;object-fit:cover;max-width:none}
     .audio-time{color:#888;font-weight:bold;text-align:center;font-size:1em}
     .audio-loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#666;font-size:14px;display:none}
     .audio-error{color:#e74c3c;text-align:center;padding:1em;font-size:14px;display:none}
