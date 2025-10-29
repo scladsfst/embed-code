@@ -11,7 +11,6 @@ export default function Home() {
   const [audioFiles, setAudioFiles] = useState<
     { name: string; download_url: string }[]
   >([]);
-  const [enableTracking, setEnableTracking] = useState(false); // New state for tracking checkbox
 
   const fetchAudioFiles = async () => {
     const response = await fetch("/api/audio-files");
@@ -48,7 +47,6 @@ export default function Home() {
         body: JSON.stringify({
           filename: file.name,
           content: content,
-          enableTracking: enableTracking, // Pass the checkbox state to the API
         }),
       });
 
@@ -94,22 +92,6 @@ export default function Home() {
             className="block w-full text-base text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
             required
           />
-          <div className="flex items-center">
-            
-            <input
-              type="checkbox"
-              id="enableTracking"
-              checked={enableTracking}
-              onChange={(e) => setEnableTracking(e.target.checked)}
-              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-            />
-            <label
-              htmlFor="enableTracking"
-              className="ml-2 text-sm font-medium text-gray-700 cursor-pointer select-none"
-            >
-              Enable Analytics & Performance Tracking
-            </label>
-          </div>{" "}
           <button
             type="submit"
             className="w-full bg-gradient-to-r from-blue-500 to-red-500 text-white font-semibold py-2 rounded-lg hover:bg-gradient-to-l transition-colors text-lg"

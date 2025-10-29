@@ -2,7 +2,7 @@ import { Octokit } from "@octokit/rest";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  const { filename, content, enableTracking } = await req.json();
+  const { filename, content } = await req.json();
 
   const octokit = new Octokit({
     auth: process.env.GITHUB_TOKEN,
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
       },
     });
 
-    const htmlContent = generateHTML(filename, enableTracking);
+    const htmlContent = generateHTML(filename);
 
     const htmlFilename = `${filename.split(".").slice(0, -1).join(".")}.html`;
     const htmlFilePath = `embeded/${htmlFilename}`;
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
 
     const audioLink = `https://host.the30x.com/${audioFilePath}`;
     const htmlLink = `https://host.the30x.com/${htmlFilePath}`;
-    const htmlContents = generateHTML(filename, enableTracking);
+    const htmlContents = generateHTML(filename);
 
     return NextResponse.json({ audioLink, htmlLink, htmlContents });
   } catch (error) {
@@ -98,7 +98,7 @@ export async function POST(req: Request) {
   }
 }
 
-function generateHTML(filename: string, enableTracking: boolean): string {
+function generateHTML(filename: string): string {
   const baseStyles = `
     .audio-container{font-family:Arial,sans-serif;display:flex;justify-content:center;width:100%;min-height:max-content}
     #plyr-audio{pointer-events:none}
@@ -159,33 +159,9 @@ function generateHTML(filename: string, enableTracking: boolean): string {
             if(player.playing){
               player.pause();
               elements.playImg.src=playImage;
-              ${
-                enableTracking
-                  ? `
-              if(typeof dataLayer!=='undefined'){
-                dataLayer.push({
-                  'event':'audio_action',
-                  'action':'pause',
-                  'audio_title':document.title||'${filename}'
-                });
-              }`
-                  : ""
-              }
             }else{
               player.play();
               elements.playImg.src=playImageGray;
-              ${
-                enableTracking
-                  ? `
-              if(typeof dataLayer!=='undefined'){
-                dataLayer.push({
-                  'event':'audio_action',
-                  'action':'play',
-                  'audio_title':document.title||'${filename}'
-                });
-              }`
-                  : ""
-              }
             }
           });
           
@@ -194,35 +170,9 @@ function generateHTML(filename: string, enableTracking: boolean): string {
             if(currentSpeed===1){
               player.speed=1.5;
               elements.speedImg.src='https://host.the30x.com/runs.svg';
-              ${
-                enableTracking
-                  ? `
-              if(typeof dataLayer!=='undefined'){
-                dataLayer.push({
-                  'event':'audio_action',
-                  'action':'speed_change',
-                  'speed':1.5,
-                  'audio_title':document.title||'${filename}'
-                });
-              }`
-                  : ""
-              }
             }else{
               player.speed=1;
               elements.speedImg.src='https://host.the30x.com/run.svg';
-              ${
-                enableTracking
-                  ? `
-              if(typeof dataLayer!=='undefined'){
-                dataLayer.push({
-                  'event':'audio_action',
-                  'action':'speed_change',
-                  'speed':1,
-                  'audio_title':document.title||'${filename}'
-                });
-              }`
-                  : ""
-              }
             }
           });
           
@@ -310,96 +260,7 @@ function generateHTML(filename: string, enableTracking: boolean): string {
         loadPlyr();
       }
       
-      ${
-        enableTracking
-          ? `
-      // Enhanced tracking with error handling
-      (function(){
-        if(typeof dataLayer==='undefined'){
-          window.dataLayer=[];
-        }
-        
-        var divisor=10;
-        var audios_status={};
-        
-        function eventHandler(e){
-          try{
-            var audioId=e.target.id||(e.target.id='html5_audio_'+Math.random().toString(36).slice(2));
-            var audioTitle=decodeURIComponent((e.target.currentSrc||'').split('/').pop()||'${filename}');
-            
-            switch(e.type){
-              case 'timeupdate':
-                if(!audios_status[audioId])return;
-                audios_status[audioId].current=Math.round(e.target.currentTime);
-                var pct=Math.floor(100*audios_status[audioId].current/e.target.duration);
-                for(var j in audios_status[audioId]._progress_markers){
-                  if(pct>=j&&j>audios_status[audioId].greatest_marker){
-                    audios_status[audioId].greatest_marker=j;
-                  }
-                }
-                if(audios_status[audioId].greatest_marker&&!audios_status[audioId]._progress_markers[audios_status[audioId].greatest_marker]){
-                  audios_status[audioId]._progress_markers[audios_status[audioId].greatest_marker]=true;
-                  dataLayer.push({
-                    'event':'audio',
-                    'audioPlayerAction':'Progress %'+audios_status[audioId].greatest_marker,
-                    'audioTitle':audioTitle
-                  });
-                }
-                break;
-              case 'play':
-                dataLayer.push({
-                  'event':'audio',
-                  'audioPlayerAction':'play',
-                  'audioTitle':audioTitle
-                });
-                break;
-              case 'pause':
-                dataLayer.push({
-                  'event':'audio',
-                  'audioPlayerAction':'pause',
-                  'audioTitle':audioTitle,
-                  'audioValue':audios_status[audioId]?audios_status[audioId].current:0
-                });
-                break;
-              case 'ended':
-                dataLayer.push({
-                  'event':'audio',
-                  'audioPlayerAction':'finished',
-                  'audioTitle':audioTitle
-                });
-                break;
-            }
-          }catch(err){
-            console.warn('Tracking error:',err);
-          }
-        }
-        
-        setTimeout(function(){
-          var audios=document.getElementsByTagName('audio');
-          for(var i=0;i<audios.length;i++){
-            var audioId=audios[i].getAttribute('id')||('html5_audio_'+Math.random().toString(36).slice(2));
-            if(!audios[i].getAttribute('id')){
-              audios[i].setAttribute('id',audioId);
-            }
-            
-            audios_status[audioId]={
-              greatest_marker:0,
-              _progress_markers:{},
-              current:0
-            };
-            
-            for(var j=0;j<divisor;j++){
-              audios_status[audioId]._progress_markers[(j+1)*(100/divisor)]=false;
-            }
-            
-            ['timeupdate','play','pause','ended'].forEach(function(event){
-              audios[i].addEventListener(event,eventHandler);
-            });
-          }
-        },500);
-      })();`
-          : ""
-      }
+      
     })();
   `;
 
