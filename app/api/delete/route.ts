@@ -5,13 +5,13 @@ export async function DELETE(req: Request) {
   const { filename } = await req.json();
 
   const octokit = new Octokit({
-    auth: process.env.GITHUB_TOKEN,
+    auth: process.env.GITHUB_TOKEN_NEW,
   });
 
   try {
     const { data: fileData } = await octokit.repos.getContent({
-      owner: 'mr-rony356',
-      repo: 'Eric-Audio-button',
+      owner: 'scladsfst',
+      repo: '1on1-audio',
       path: `audio/${filename}`,
     });
 
@@ -20,26 +20,25 @@ export async function DELETE(req: Request) {
     }
 
     await octokit.repos.deleteFile({
-      owner: 'mr-rony356',
-      repo: 'Eric-Audio-button',
+      owner: 'scladsfst',
+      repo: '1on1-audio',
       path: `audio/${filename}`,
       message: `Delete ${filename}`,
       sha: fileData.sha,
-      committer: {
-        name: 'mr-rony356',
-        email: 'committer@example.com',
-      },
-      author: {
-        name: 'mr-rony356',
-        email: 'author@example.com',
-      },
     });
 
     return NextResponse.json({ message: 'File deleted successfully' });
   } catch (error: any) {
     if (error.status === 404) {
-      return NextResponse.json({ message: 'No file available' }, { status: 404 });
+      return NextResponse.json(
+        { message: 'No file available' },
+        { status: 404 }
+      );
     }
-    return NextResponse.json({ message: error.message }, { status: 500 });
+
+    return NextResponse.json(
+      { message: error.message },
+      { status: 500 }
+    );
   }
 }
