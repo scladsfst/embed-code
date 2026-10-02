@@ -3,17 +3,16 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   const octokit = new Octokit({
-    auth: process.env.GITHUB_TOKEN,
+    auth: process.env.GITHUB_TOKEN_NEW,
   });
 
   try {
     const response = await octokit.repos.getContent({
-      owner: 'mr-rony356',
-      repo: 'Eric-Audio-button',
+      owner: 'scladsfst',
+      repo: '1on1-audio',
       path: 'embeded',
     });
 
-    // Ensure the response is an array of files
     if (Array.isArray(response.data)) {
       const files = response.data.map((file: any) => ({
         name: file.name,
@@ -26,6 +25,9 @@ export async function GET() {
     }
   } catch (error) {
     console.error('Error fetching audio files:', error);
-    return NextResponse.json({ message: 'No audio available' }, { status: 500 });
+    return NextResponse.json(
+      { message: 'No audio available' },
+      { status: 500 }
+    );
   }
 }
