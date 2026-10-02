@@ -5,7 +5,7 @@ export async function POST(req: Request) {
   const { filename, content } = await req.json();
 
   const octokit = new Octokit({
-    auth: process.env.GITHUB_TOKEN,
+    auth: process.env.GITHUB_TOKEN_NEW,
   });
 
   try {
@@ -15,8 +15,8 @@ export async function POST(req: Request) {
     let sha;
     try {
       const { data } = await octokit.repos.getContent({
-        owner: "mr-rony356",
-        repo: "Eric-Audio-button",
+        owner: "scladsfst",
+        repo: "1on1-audio",
         path: audioFilePath,
       });
       if (!Array.isArray(data) && "sha" in data) {
@@ -30,18 +30,18 @@ export async function POST(req: Request) {
 
     // Upload or update the audio file
     await octokit.repos.createOrUpdateFileContents({
-      owner: "mr-rony356",
-      repo: "Eric-Audio-button",
+      owner: "scladsfst",
+      repo: "1on1-audio",
       path: audioFilePath,
       message: `Upload ${filename}`,
       content: Buffer.from(content, "base64").toString("base64"),
       sha, // Include the SHA if the file already exists
       committer: {
-        name: "mr-rony356",
+        name: "scladsfst",
         email: "committer@example.com",
       },
       author: {
-        name: "mr-rony356",
+        name: "scladsfst",
         email: "author@example.com",
       },
     });
@@ -54,8 +54,8 @@ export async function POST(req: Request) {
     let htmlSha;
     try {
       const { data } = await octokit.repos.getContent({
-        owner: "mr-rony356",
-        repo: "Eric-Audio-button",
+        owner: "scladsfst",
+        repo: "1on1-audio",
         path: htmlFilePath,
       });
       if (!Array.isArray(data) && "sha" in data) {
@@ -69,18 +69,18 @@ export async function POST(req: Request) {
 
     // Create or update the HTML file
     await octokit.repos.createOrUpdateFileContents({
-      owner: "mr-rony356",
-      repo: "Eric-Audio-button",
+      owner: "scladsfst",
+      repo: "1on1-audio",
       path: htmlFilePath,
       message: `Create HTML for ${filename}`,
       content: Buffer.from(htmlContent).toString("base64"),
       sha: htmlSha,
       committer: {
-        name: "mr-rony356",
+        name: "scladsfst",
         email: "committer@example.com",
       },
       author: {
-        name: "mr-rony356",
+        name: "scladsfst",
         email: "author@example.com",
       },
     });
